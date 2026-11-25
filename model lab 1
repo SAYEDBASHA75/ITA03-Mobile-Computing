@@ -1,0 +1,96 @@
+########################### WSN.ned
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.node.inet.WirelessHost;
+import inet.physicallayer.wireless.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
+import inet.visualizer.integrated.IntegratedCanvasVisualizer;
+
+network WSN
+{
+    parameters:
+        int numSensors = default(5);
+
+    submodules:
+        radioMedium: Ieee80211ScalarRadioMedium {
+            @display("p=100,100");
+        }
+
+        configurator: Ipv4NetworkConfigurator {
+            @display("p=100,200");
+        }
+
+        visualizer: IntegratedCanvasVisualizer {
+            @display("p=100,300");
+        }
+
+        sensor[numSensors]: WirelessHost {
+            @display("i=device/sensor");
+        }
+
+        sink: WirelessHost {
+            @display("i=device/server");
+        }
+}
+
+
+################ omnetpp.ini
+
+[General]
+network = WSN
+sim-time-limit = 100s
+
+# Number of sensor nodes
+*.numSensors = 5
+
+# Wireless medium
+*.radioMedium.mediumLimitCache = false
+
+# Sensor node configuration
+*.sensor[*].wlan[0].typename = "Ieee80211Interface"
+*.sink.wlan[0].typename = "Ieee80211Interface"
+
+# Radio power
+*.sensor[*].wlan[0].radio.transmitter.power = 2mW
+*.sink.wlan[0].radio.transmitter.power = 2mW
+
+# Mobility configuration
+*.sensor[*].mobility.typename = "StationaryMobility"
+*.sink.mobility.typename = "StationaryMobility"
+
+# Sensor positions
+*.sensor[0].mobility.initialX = 100m
+*.sensor[0].mobility.initialY = 100m
+
+*.sensor[1].mobility.initialX = 150m
+*.sensor[1].mobility.initialY = 100m
+
+*.sensor[2].mobility.initialX = 200m
+*.sensor[2].mobility.initialY = 100m
+
+*.sensor[3].mobility.initialX = 100m
+*.sensor[3].mobility.initialY = 150m
+
+*.sensor[4].mobility.initialX = 150m
+*.sensor[4].mobility.initialY = 150m
+
+# Sink position
+*.sink.mobility.initialX = 125m
+*.sink.mobility.initialY = 200m
+
+# UDP application configuration
+*.sensor[*].numApps = 1
+*.sensor[*].app[0].typename = "UdpBasicApp"
+*.sensor[*].app[0].destAddresses = "sink"
+*.sensor[*].app[0].destPort = 5000
+*.sensor[*].app[0].messageLength = 1024B
+*.sensor[*].app[0].sendInterval = 1s
+*.sensor[*].app[0].startTime = 1s
+
+# Sink application configuration
+*.sink.numApps = 1
+*.sink.app[0].typename = "UdpSink"
+*.sink.app[0].localPort = 5000
+
+# Record statistics
+**.packetSent:vector = true
+**.packetReceived:vector = true
+**.throughput:vector = true
